@@ -27,7 +27,7 @@ if __name__ == "__main__":
         raise ValueError("MQTT Broker not connected")
 
     # ************* Load Model *************
-    model_bird = YOLO('Model/yolo11m-birds-detection.pt')
+    model_bird = YOLO('Model/yolo11m-birds-detection_best.pt')
 
     # ************* Start Camera *************
     cap = cv.VideoCapture(f'http://{camera}:81/stream')
