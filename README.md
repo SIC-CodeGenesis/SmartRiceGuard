@@ -1,4 +1,4 @@
-# Smart Farmer Dashboard - Code Genesis
+# Smart Rice Guard - Code Genesis
 
 **Project Overview**  
 Welcome to the **Smart Farmer Dashboard**, a cutting-edge IoT and AI-powered solution developed by **Team Code Genesis** for the **Samsung Innovation Campus Batch 6 IoT Gen AI Program**. This project aims to revolutionize rice farming by integrating advanced environmental monitoring, bird deterrence, and real-time analytics into a seamless, user-friendly platform. Our system combines ESP32-based hardware, AI-driven computer vision, MQTT communication, and a Streamlit-based dashboard to empower farmers with precision agriculture tools.
@@ -322,9 +322,9 @@ To ensure reliability, scalability, and maintainability, we adopted the followin
 
 ## Team Code Genesis
 We are a passionate team from **Samsung Innovation Campus Batch 6 IoT Gen AI**, dedicated to leveraging technology for agriculture:
-- **Member 1**: Thoriq Firdaus Arifin  IOT/DevOps/AI/ML/Streamlit – Designed ESP32 integrations.
+- **Member 1**: Thoriq Firdaus Arifin  IOT/DevOps/AI/ML/Streamlit – Lead and design architech.
 - **Member 2**: Muhammad Javier Badrudtaman AI Engineer/ML/Iot – Developed YOLO-based bird detection.
-- **Member 3**: Muammar Mufid IOT/Design Thinking– Crafted Streamlit dashboard.
+- **Member 3**: Muammar Mufid IOT/Design Thinking– Crafted the AI Integration.
 - **Member 4**: Muhammad Nanda Build UI/Devops – Ensured seamless MQTT/WebSocket flow.
 
 Our collaboration reflects innovation, teamwork, and a commitment to empowering farmers.
