@@ -8,8 +8,8 @@ load_dotenv()
 def cek_camera_esp_ai_thinker(ip):
     """
     Check the connection to the ESP AI Thinker camera.
-    :param ip: IP address of the camera
-    :return: Response from the camera
+        :param ip: IP address of the camera
+        :return: Response from the camera
     """
     if not ip:
         raise ValueError("IP address is required")
@@ -27,8 +27,8 @@ def cek_camera_esp_ai_thinker(ip):
 def control_camera_esp_ai_thinker_to_hd(ip):
     """
     Control the ESP AI Thinker camera to HD resolution.
-    :param ip: IP address of the camera
-    :return: Response from the camera control command
+        :param ip: IP address of the camera
+        :return: Response from the camera control command
     """
     if not ip:
         raise ValueError("IP address is required")
@@ -46,8 +46,8 @@ def control_camera_esp_ai_thinker_to_hd(ip):
 def cek_camera_configuration(ip):
     """
     Check the camera configuration.
-    :param ip: IP address of the camera
-    :return: Response from the camera configuration command
+        :param ip: IP address of the camera
+        :return: Response from the camera configuration command
     """
     if not ip:
         raise ValueError("IP address is required")

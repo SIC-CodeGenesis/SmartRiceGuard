@@ -37,6 +37,29 @@ class MyMQTTClient():
         # print message, useful for checking if it was successful
         def on_message(client, userdata, msg):
             print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+        
+        def on_disconnect(client, userdata, rc):
+            FIRST_RECONNECT_DELAY = 1
+            RECONNECT_RATE = 2
+            MAX_RECONNECT_COUNT = 12
+            MAX_RECONNECT_DELAY = 60
+            print("Disconnected with result code: %s", rc)
+            reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
+            while reconnect_count < MAX_RECONNECT_COUNT:
+                print("Reconnecting in %d seconds...", reconnect_delay)
+                time.sleep(reconnect_delay)
+
+                try:
+                    client.reconnect()
+                    print("Reconnected successfully!")
+                    return
+                except Exception as err:
+                    print("%s. Reconnect failed. Retrying...", err)
+
+                reconnect_delay *= RECONNECT_RATE
+                reconnect_delay = min(reconnect_delay, MAX_RECONNECT_DELAY)
+                reconnect_count += 1
+            print("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
         client = paho.Client(client_id="server-publish", userdata=None, protocol=paho.MQTTv5)
         client.on_connect = on_connect
@@ -44,20 +67,21 @@ class MyMQTTClient():
         # enable TLS for secure connection
         client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
         # set username and password
-        client.username_pw_set(username, password)
+        client.username_pw_set(self.username, self.password)
         # connect to HiveMQ Cloud on port 8883 (default for MQTT)
-        client.connect(broker, 8883)
+        client.connect(self.broker, 8883)
 
         # setting callbacks, use separate functions like above for better visibility
         client.on_subscribe = on_subscribe
         client.on_message = on_message
         client.on_publish = on_publish
+        client.on_disconnect = on_disconnect
         return client
 
 
     def publish_play_sound(self):
         topic = "control/sawah1/mp3player/play"
-        payload = "{\"play\": \"1\"}"
+        payload = "{\"action\": \"play sound test\"}"
         if time.time() - self.timer < self.max_time:
             print(time.time() - self.timer)
             print("Waiting for the previous command to finish...")
