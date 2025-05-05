@@ -3,6 +3,8 @@ import asyncio
 import websockets
 import base64
 from PIL import Image
+import requests
+from io import BytesIO
 import io
 import logging
 import queue
@@ -10,6 +12,7 @@ import threading
 import time
 import atexit
 import uuid
+import numpy as np
 from utils.camera_util import get_wifi_ip, scan_camera, Camera
 from utils.display import display_dict_to_ui
 import pandas as pd
@@ -17,6 +20,8 @@ from dotenv import load_dotenv
 import os
 from nodes.mqtt_client import MyMQTTClient
 from nodes.ubidots_client import ubidots
+from nodes.LLM_nodes import RicePlantAnalyzer
+import cv2
 
 # Setup logging
 logging.basicConfig(
@@ -330,6 +335,8 @@ if "frame_queue" not in st.session_state:
     st.session_state.frame_queue = queue.Queue(maxsize=10)
 if "frame_counter" not in st.session_state:
     st.session_state.frame_counter = 0
+if "captured_frame" not in st.session_state:
+    st.session_state.captured_frame = None
 
 # **************** Variable ***************
 wifi_ip = get_wifi_ip()
@@ -349,7 +356,6 @@ if "mqtt_client" not in st.session_state or st.session_state.mqtt_client is None
             logger.error("Missing MQTT credentials")
             st.error("Konfigurasi MQTT tidak lengkap. Periksa file .env.")
             raise ValueError("Incomplete MQTT configuration")
-        # Tambahkan Client ID unik ke logger untuk tracking
         client_id = f"dashboard-{uuid.uuid4()}"
         logger.info("Initializing MQTT client with Client ID: %s", client_id)
         st.session_state.mqtt_client = MyMQTTClient(BROKER, int(PORT), USERNAME, PASSWORD)
@@ -376,6 +382,7 @@ with st.sidebar:
         st.markdown("# 🚀 Menu 🚀")
     sidebar_button("Dashboard")
     sidebar_button("Live Cam")
+    sidebar_button("Live Condition")
     sidebar_button("Speaker Config")
     sidebar_button("Camera Config")
 
@@ -416,6 +423,61 @@ elif selected == "Live Cam":
 
     else:
         placeholder.write("Camera feed stopped.")
+
+elif selected == "Live Condition":
+    st.subheader("🌾 Live Condition")
+    camera_ip = st.text_input("Enter Camera IP Address", value="", key="live_condition_camera_ip")
+    
+    if st.button("Capture and Analyze", key="capture_analyze_button"):
+        if not camera_ip:
+            st.warning("Masukkan alamat IP kamera.")
+        else:
+            try:
+                camera = Camera(camera_ip)
+                response = requests.get(f"http://{camera_ip}/capture", timeout=10)
+                response.raise_for_status()
+                image = Image.open(BytesIO(response.content))
+                st.session_state.captured_frame = image
+                logger.info("Captured frame for analysis.")
+            except Exception as e:
+                st.error(f"Gagal mengambil gambar dari kamera: {str(e)}")
+                logger.error(f"Failed to capture frame: {str(e)}")
+                st.session_state.captured_frame = None
+
+        if "captured_frame" in st.session_state and st.session_state.captured_frame:
+            col1, col2 = st.columns([1, 2])
+            st.image(st.session_state.captured_frame, channels="RGB", caption="Captured Frame")
+            st.write("### Analysis")
+            # Create a placeholder for streaming analysis
+            analysis_container = st.empty()
+            try:
+                analyzer = RicePlantAnalyzer()
+                # Override _fetch_image to use the captured frame
+                def custom_fetch_image(self, camera_ip: str):
+                    if st.session_state.captured_frame:
+                        image = np.array(st.session_state.captured_frame)
+                        if len(image.shape) == 2:
+                            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                        return image
+                    raise RuntimeError("No captured frame available.")
+                
+                # Bind custom fetch method to analyzer instance
+                import types
+                analyzer._fetch_image = types.MethodType(custom_fetch_image, analyzer)
+                
+                # Stream analysis output with a spinner
+                with st.spinner("Analyzing rice plant condition..."):
+                    full_text = ""  # Accumulate streamed chunks
+                    for chunk in analyzer.infer_plant_condition(camera_ip=camera_ip):
+                        full_text += chunk
+                        # Update the container with the accumulated text
+                        analysis_container.markdown(full_text, unsafe_allow_html=True)
+                        logger.debug("Streamed analysis chunk.")
+            except Exception as e:
+                analysis_container.error(f"Error during analysis: {str(e)}")
+                logger.error(f"Analysis failed: {str(e)}")
+    else:
+        st.info("Klik 'Capture and Analyze' untuk mengambil gambar dan menganalisis kondisi tanaman.")
 
 elif selected == "Speaker Config":
     st.subheader("🔊 Speaker Configuration")
